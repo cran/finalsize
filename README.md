@@ -4,15 +4,27 @@
 <!-- badges: start -->
 
 [![License:
-MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit/)
+[![Project Status: Active – The project has reached a stable, usable
+state and is being actively
+developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R-CMD-check](https://github.com/epiverse-trace/finalsize/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/epiverse-trace/finalsize/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/epiverse-trace/finalsize/branch/main/graph/badge.svg)](https://app.codecov.io/gh/epiverse-trace/finalsize?branch=main)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/finalsize)](https://CRAN.R-project.org/package=finalsize)
 <!-- badges: end -->
 
-*finalsize* provides calculations for the final size of an epidemic in a
-population with demographic variation in contact patterns, and variation
-within and between age groups in their susceptibility to disease.
+*finalsize* is an R package to calculate the final size of a SIR
+epidemic in populations with heterogeneity in social contacts and
+infection susceptibility.
+
+*finalsize* provides estimates for the total proportion of a population
+infected over the course of an epidemic, and can account for a
+demographic distribution (such as age groups) and demography-specific
+contact patterns, as well as for heterogeneous susceptibility to
+infection between groups (such as due to age-group specific immune
+responses) and within groups (such as due to immunisation programs).
 
 *finalsize* implements methods outlined in Andreasen
 ([2011](#ref-andreasen2011)), Miller ([2012](#ref-miller2012)),
@@ -30,29 +42,35 @@ algebra, and is developed at the [Centre for the Mathematical Modelling
 of Infectious
 Diseases](https://www.lshtm.ac.uk/research/centres/centre-mathematical-modelling-infectious-diseases)
 at the London School of Hygiene and Tropical Medicine as part of the
-[Epiverse Initiative](https://data.org/initiatives/epiverse/).
+[Epiverse-TRACE](https://data.org/initiatives/epiverse/).
 
 ## Installation
 
-The package can be installed using
+The package can be installed from CRAN using
 
 ``` r
 install.packages("finalsize")
 ```
 
+### Development version
+
 The current development version of *finalsize* can be installed from
 [Github](https://github.com/epiverse-trace/finalsize) using the
-`remotes` package.
+`remotes` package. The development version documentation can be found
+[here](https://epiverse-trace.github.io/finalsize/dev/).
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("epiverse-trace/finalsize")
+if(!require("pak")) install.packages("pak")
+pak::pak("epiverse-trace/finalsize")
 ```
 
 ## Quick start
 
-*finalsize* provides the single function `final_size()`, to calculate
-the final size of an epidemic.
+The main function in *finalsize* is `final_size()`, which calculates the
+final size of an epidemic. Helper functions included in *finalsize* are
+provided to calculate the effective $R_0$, called $R_{eff}$, from
+demographic and susceptibility distribution data, while other helpers
+can convert between $R_0$ and the transmission rate $\lambda$.
 
 Here, an example using social contact data from the *socialmixr* package
 investigates the final size of an epidemic when the disease has an
@@ -91,13 +109,23 @@ p_susceptibility <- matrix(
 # R0 of the disease
 r0 <- 1.5 # assumed for pandemic influenza
 
-# Calculate the proportion of individuals infected
+# calculate the effective R0 using `r_eff()`
+r_eff(
+  r0 = r0,
+  contact_matrix = contact_matrix,
+  demography_vector = demography_vector,
+  susceptibility = susceptibility,
+  p_susceptibility = p_susceptibility
+)
+#> [1] 1.171758
+
+# Calculate the proportion of individuals infected in each age group
 final_size(
-  r0,
-  contact_matrix,
-  demography_vector,
-  p_susceptibility,
-  susceptibility
+  r0 = r0,
+  contact_matrix = contact_matrix,
+  demography_vector = demography_vector,
+  susceptibility = susceptibility,
+  p_susceptibility = p_susceptibility
 )
 #>   demo_grp   susc_grp susceptibility p_infected
 #> 1   [0,20) susc_grp_1            1.0 0.32849966
@@ -134,22 +162,21 @@ By contributing to this project, you agree to abide by its terms.
 
 ``` r
 citation("finalsize")
-#> 
 #> To cite package 'finalsize' in publications use:
 #> 
-#>   Gupte P, Van Leeuwen E, Kucharski A (2022). _finalsize: Calculate the
+#>   Gupte P, Van Leeuwen E, Kucharski A (2023). _finalsize: Calculate the
 #>   Final Size of an Epidemic_.
-#>   https://epiverse-trace.github.io/finalsize/,
-#>   https://github.com/epiverse-trace/finalsize.
+#>   https://github.com/epiverse-trace/finalsize,
+#>   https://epiverse-trace.github.io/finalsize/.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
 #>     title = {finalsize: Calculate the Final Size of an Epidemic},
 #>     author = {Pratik Gupte and Edwin {Van Leeuwen} and Adam Kucharski},
-#>     year = {2022},
-#>     note = {https://epiverse-trace.github.io/finalsize/,
-#> https://github.com/epiverse-trace/finalsize},
+#>     year = {2023},
+#>     note = {https://github.com/epiverse-trace/finalsize,
+#> https://epiverse-trace.github.io/finalsize/},
 #>   }
 ```
 
@@ -178,8 +205,8 @@ SIR Epidemic Models.” *Mathematical Biosciences* 282 (December): 181–90.
 
 Kucharski, Adam J., Kin O. Kwok, Vivian W. I. Wei, Benjamin J. Cowling,
 Jonathan M. Read, Justin Lessler, Derek A. Cummings, and Steven Riley.
-2014. “The Contribution of Social Behaviour to the Transmission of
-Influenza A in a Human Population.” *PLoS Pathogens* 10 (6): e1004206.
+2014. “The contribution of social behaviour to the transmission of
+influenza A in a human population.” *PLoS pathogens* 10 (6): e1004206.
 <https://doi.org/10.1371/journal.ppat.1004206>.
 
 </div>

@@ -13,7 +13,7 @@ contact_matrix <- t(contact_data$matrix)
 demography_vector <- contact_data$demography$population
 
 # scale by maximum real eigenvalue and divide by demography
-contact_matrix <- contact_matrix / max(eigen(contact_matrix)$values)
+contact_matrix <- contact_matrix / max(Re(eigen(contact_matrix)$values))
 contact_matrix <- contact_matrix / demography_vector
 
 p_susceptibility <- matrix(1, ncol = 1, nrow = 3)
@@ -143,7 +143,10 @@ test_that("Warning when error is much larger than tolerance", {
         tolerance = 1e-12
       )
     ),
-    regexp = "Solver error > 100x solver tolerance, try increasing iterations"
+    regexp = paste0(
+      "The solver reached the maximum number of iterations but solver error ",
+      "> 100x solver tolerance, try increasing iterations"
+    )
   )
 
   # for the newton solver
@@ -160,8 +163,10 @@ test_that("Warning when error is much larger than tolerance", {
         tolerance = 1e-12
       )
     ),
-    regexp =
-      "Solver error > 100x solver tolerance, try increasing iterations"
+    regexp = paste0(
+      "The solver reached the maximum number of iterations but solver error ",
+      "> 100x solver tolerance, try increasing iterations"
+    )
   )
 })
 

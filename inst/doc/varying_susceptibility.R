@@ -8,10 +8,14 @@ knitr::opts_chunk$set(
 )
 
 ## ----setup, message=FALSE, warning=FALSE, class.source = 'fold-hide'----------
+# load finalsize
 library(finalsize)
 
 # load necessary packages
-library(data.table)
+if (!require("socialmixr")) install.packages("socialmixr")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("colorspace")) install.packages("colorspace")
+
 library(ggplot2)
 library(colorspace)
 
@@ -30,7 +34,7 @@ contact_matrix <- t(contact_data$matrix)
 demography_vector <- contact_data$demography$population
 
 # scale the contact matrix so the largest eigenvalue is 1.0
-contact_matrix <- contact_matrix / max(eigen(contact_matrix)$values)
+contact_matrix <- contact_matrix / max(Re(eigen(contact_matrix)$values))
 
 # divide each row of the contact matrix by the corresponding demography
 contact_matrix <- contact_matrix / demography_vector
@@ -38,12 +42,12 @@ contact_matrix <- contact_matrix / demography_vector
 n_demo_grps <- length(demography_vector)
 
 ## ----class.source = 'fold-hide'-----------------------------------------------
-r0 <- 2.0
+r0 <- 1.5
 
 ## -----------------------------------------------------------------------------
 # susceptibility is higher for the old
 susc_variable <- matrix(
-  data = c(0.2, 0.5, 0.6, 0.9, 1.0)
+  data = c(0.75, 0.8, 0.85, 0.9, 1.0)
 )
 n_susc_groups <- 1L
 
@@ -52,6 +56,16 @@ p_susc_uniform <- matrix(
   data = 1.0,
   nrow = n_demo_grps,
   ncol = n_susc_groups
+)
+
+## -----------------------------------------------------------------------------
+# calculate the effective R0 using `r_eff()`
+r_eff(
+  r0 = r0,
+  contact_matrix = contact_matrix,
+  demography_vector = demography_vector,
+  susceptibility = susc_variable,
+  p_susceptibility = p_susc_uniform
 )
 
 ## -----------------------------------------------------------------------------
@@ -95,6 +109,9 @@ final_size_data$demo_grp <- factor(
   levels = contact_data$demography$age.group
 )
 
+# examine the combined data
+final_size_data
+
 ## ----class.source = 'fold-hide', fig.cap="Final sizes of epidemics in populations wherein susceptibility to the infection is either uniform (green), or heterogeneous (purple), with older individuals more susceptible to the infection.", fig.width=5, fig.height=4----
 ggplot(final_size_data) +
   geom_col(
@@ -106,6 +123,9 @@ ggplot(final_size_data) +
     position = position_dodge(
       width = 0.75
     )
+  ) +
+  expand_limits(
+    x = c(0.5, length(unique(final_size_data$demo_grp)) + 0.5)
   ) +
   scale_fill_discrete_qualitative(
     palette = "Cold",
@@ -148,7 +168,7 @@ colnames(susc_immunised) <- c("Un-immunised", "Immunised")
 n_risk_groups <- ncol(susc_immunised)
 
 ## -----------------------------------------------------------------------------
-# immunisation increases with age between 20% (infants) and 90% (65+)
+# immunisation rate is uniform across age groups
 immunisation_rate <- rep(0.5, n_demo_grps)
 
 # add a second column to p_susceptibility
@@ -167,6 +187,7 @@ final_size_immunised <- final_size(
   p_susceptibility = p_susc_immunised
 )
 
+## -----------------------------------------------------------------------------
 # add scenario identifier
 final_size_immunised$scenario <- "immunisation"
 
@@ -181,7 +202,10 @@ final_size_immunised$demo_grp <- factor(
   levels = contact_data$demography$age.group
 )
 
-## ----fig.cap="Final size of an SIR epidemic with $R_0$ = 2.0, in a population wherein 50% of each age group is immunised against the infection. The immunisation is assumed to reduce the initial susceptibility of each age group by 25%. This leads to both within- and between-group heterogeneity in susceptibility. Vaccinating even 50% of each age group can substantially reduce the epidemic final size in comparison with a scenario in which there is no immunisation (grey). Note that the final sizes in this figure are all below 50%.", fig.width=5, fig.height=4, class.source = 'fold-hide'----
+# examine the data
+final_size_immunised
+
+## ----fig.cap="Final size of an SIR epidemic with $R_0$ = 1.5, in a population wherein 50% of each age group is immunised against the infection. The immunisation is assumed to reduce the initial susceptibility of each age group by 25%. This leads to both within- and between-group heterogeneity in susceptibility. Vaccinating even 50% of each age group can substantially reduce the epidemic final size in comparison with a scenario in which there is no immunisation (grey). Note that the final sizes in this figure are all below 50%.", fig.width=5, fig.height=4, class.source = 'fold-hide'----
 ggplot(final_size_immunised) +
   geom_col(
     data = final_size_heterog,
@@ -201,6 +225,18 @@ ggplot(final_size_immunised) +
     col = "black",
     position = position_dodge()
   ) +
+  facet_grid(
+    cols = vars(scenario),
+    labeller = labeller(
+      scenario = c(
+        heterogeneous = "Between groups only",
+        immunisation = "Within & between groups"
+      )
+    )
+  ) +
+  expand_limits(
+    x = c(0.5, length(unique(final_size_immunised$demo_grp)) + 0.5)
+  ) +
   scale_fill_discrete_qualitative(
     palette = "Dynamic",
     rev = TRUE,
@@ -210,8 +246,8 @@ ggplot(final_size_immunised) +
   ) +
   scale_colour_manual(
     values = "black",
-    name = NULL,
-    labels = "Susceptibility heterogeneous\nbetween groups,\nno immunisation"
+    name = "No immunisation",
+    labels = "Susceptibility homogeneous\nwithin groups"
   ) +
   scale_y_continuous(
     labels = scales::percent,
@@ -219,19 +255,27 @@ ggplot(final_size_immunised) +
   ) +
   theme_classic() +
   theme(
-    legend.position = "top",
+    legend.position = "bottom",
     legend.key.height = unit(2, "mm"),
     legend.title = ggtext::element_markdown(
       vjust = 1
+    ),
+    strip.background = element_blank(),
+    strip.text = element_text(
+      face = "bold",
+      size = 11
     )
   ) +
   guides(
     colour = guide_legend(
-      override.aes = list(fill = "lightgrey")
+      override.aes = list(fill = "lightgrey"),
+      title.position = "top",
+      order = 1
     ),
     fill = guide_legend(
       nrow = 2,
-      title.position = "top"
+      title.position = "top",
+      order = 2
     )
   ) +
   coord_cartesian(
@@ -240,6 +284,30 @@ ggplot(final_size_immunised) +
   labs(
     x = "Age group",
     y = "% Infected",
+    title = "Heterogeneous susceptibility",
     fill = "Immunisation\nscenario"
   )
+
+## -----------------------------------------------------------------------------
+# define r0
+r0 <- 1.5
+
+# define UK population size and prepare contact matrix
+uk_pop <- 67 * 1e6
+contact_matrix <- matrix(1.0) / uk_pop
+
+# define susceptibility matrix
+susceptibility <- matrix(c(1.0, 0.7), nrow = 1, ncol = 2)
+
+# define p_susceptibility
+p_susceptibility <- matrix(c(0.7, 0.3), nrow = 1, ncol = 2)
+
+# running final_size()
+final_size(
+  r0 = r0,
+  demography_vector = uk_pop,
+  contact_matrix = contact_matrix,
+  susceptibility = susceptibility,
+  p_susceptibility = p_susceptibility
+)
 

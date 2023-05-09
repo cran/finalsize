@@ -9,10 +9,13 @@ knitr::opts_chunk$set(
 options(rmarkdown.html_vignette.check_title = FALSE)
 
 ## ----setup, message=FALSE, warning=FALSE, class.source = 'fold-hide'----------
+# load finalsize
 library(finalsize)
 
 # load necessary packages
-library(data.table)
+if (!require("socialmixr")) install.packages("socialmixr")
+if (!require("ggplot2")) install.packages("ggplot2")
+
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
@@ -30,7 +33,7 @@ contact_matrix <- t(contact_data$matrix)
 demography_vector <- contact_data$demography$population
 
 # scale the contact matrix so the largest eigenvalue is 1.0
-contact_matrix <- contact_matrix / max(eigen(contact_matrix)$values)
+contact_matrix <- contact_matrix / max(Re(eigen(contact_matrix)$values))
 
 # divide each row of the contact matrix by the corresponding demography
 contact_matrix <- contact_matrix / demography_vector
@@ -38,8 +41,8 @@ contact_matrix <- contact_matrix / demography_vector
 n_demo_grps <- length(demography_vector)
 
 ## -----------------------------------------------------------------------------
-# mean R0 is 2.0
-r0_mean <- 2.0
+# mean R0 is 1.5
+r0_mean <- 1.5
 
 ## -----------------------------------------------------------------------------
 # susceptibility is uniform
@@ -77,7 +80,7 @@ final_size_data <- Map(
 )
 
 # combine data
-final_size_data <- rbindlist(final_size_data)
+final_size_data <- Reduce(x = final_size_data, f = rbind)
 
 # order age groups
 final_size_data$demo_grp <- factor(
@@ -85,7 +88,48 @@ final_size_data$demo_grp <- factor(
   levels = contact_data$demography$age.group
 )
 
-## ----class.source = 'fold-hide', class.source = 'fold-hide', fig.cap="Estimated ranges of the final size of a hypothetical SIR epidemic in age groups of the U.K. population, when the $R_0$ is estimated to be 2.0, with a standard deviation around this estimate of 0.1. In this example, relatively low uncertainty in $R_0$ estimates can also lead to uncertainty in the estimated final size of the epidemic. Points represent means, while ranges extend between the 5th and 95th percentiles.", fig.width=5, fig.height=4----
+# examine some replicates in the data
+head(final_size_data, 15)
+
+## -----------------------------------------------------------------------------
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+
+final_size_data <-
+  # create a dataframe with values from a vector
+  tibble(r0 = r0_samples) %>%
+  rownames_to_column() %>%
+  # map the function final_size() to all the r0 values
+  # with the same set of arguments
+  # with {purrr}
+  mutate(
+    temp = map(
+      .x = r0,
+      .f = final_size,
+      contact_matrix = contact_matrix,
+      demography_vector = demography_vector,
+      susceptibility = susc_uniform,
+      p_susceptibility = p_susc_uniform
+    )
+  ) %>%
+  # unnest all the dataframe outputs in temp
+  unnest(temp) %>%
+  # relevel the factor variable
+  mutate(
+    demo_grp = fct_relevel(
+      demo_grp,
+      contact_data %>%
+        pluck("demography") %>%
+        pluck("age.group")
+    )
+  )
+
+head(final_size_data, 15)
+
+## ----class.source = 'fold-hide', class.source = 'fold-hide', fig.cap="Estimated ranges of the final size of a hypothetical SIR epidemic in age groups of the U.K. population, when the $R_0$ is estimated to be 1.5, with a standard deviation around this estimate of 0.1. In this example, relatively low uncertainty in $R_0$ estimates can also lead to uncertainty in the estimated final size of the epidemic. Points represent means, while ranges extend between the 5th and 95th percentiles.", fig.width=5, fig.height=4----
 ggplot(final_size_data) +
   stat_summary(
     aes(
