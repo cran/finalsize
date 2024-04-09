@@ -360,7 +360,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <p>When analysing an epidemic-prone infection, such as pandemic influenza, it is important to understand how many infections there could be in total. The overall number of infections that occur during such an epidemic, is called the ‘final epidemic size’.
-The expected final size of an epidemic can be calculated using methods detailed in <span class="citation">Andreasen (<a href="#ref-andreasen2011" role="doc-biblioref">2011</a>)</span>, <span class="citation">Miller (<a href="#ref-miller2012" role="doc-biblioref">2012</a>)</span>, <span class="citation">Kucharski et al. (<a href="#ref-kucharski2014" role="doc-biblioref">2014</a>)</span>, and <span class="citation">Bidari et al. (<a href="#ref-bidari2016" role="doc-biblioref">2016</a>)</span>, and which are implemented in the <em>finalsize</em> package.</p>
+The expected final size of an epidemic can be calculated using methods detailed in <span class="citation">Andreasen (<a href="#ref-andreasen2011">2011</a>)</span>, <span class="citation">Miller (<a href="#ref-miller2012">2012</a>)</span>, <span class="citation">Kucharski et al. (<a href="#ref-kucharski2014">2014</a>)</span>, and <span class="citation">Bidari et al. (<a href="#ref-bidari2016">2016</a>)</span>, and which are implemented in the <em>finalsize</em> package.</p>
+<p>An advantage of the final size approach is that it is only necessary to define pathogen transmissibility and population susceptibility to calculate the epidemic size, rather than requiring estimates of additional time-dependent processes like the duration of infectiousness or delay from infection to onset of symptoms. So <em>finalsize</em> will be particularly relevant for questions where understanding the overall size of an epidemic is more important than estimating its shape.</p>
 <div id="use-case" class="section level2 unnumbered alert alert-primary">
 <h2>Use case</h2>
 <p>An epidemic is underway. We want to know <strong>how many individuals we would expect to be infected in total</strong> for a given level of transmission and population susceptibility: this is the cumulative sum of all infections, or the <em>final size</em> of the epidemic.</p>
@@ -382,16 +383,16 @@ The expected final size of an epidemic can be calculated using methods detailed 
 </div>
 </div>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load finalsize</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(finalsize)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># load finalsize</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(finalsize)</span></code></pre></div>
 </details>
 <div id="defining-a-value-for-r_0" class="section level2">
 <h2>Defining a value for <span class="math inline">\(R_0\)</span></h2>
 <p>A number of statistical methods can be used to estimate the <span class="math inline">\(R_0\)</span> of an epidemic in its early stages from available data. These are not discussed here, but some examples are given in the <a href="https://epiverse-trace.github.io/episoap/articles/episoap.html"><em>episoap</em> package</a>.</p>
 <p>Instead, this example considers a infection with an <span class="math inline">\(R_0\)</span> of 1.5, similar to that which could potentially be observed for pandemic influenza.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define r0 as 1.5</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>r0 <span class="ot">&lt;-</span> <span class="fl">1.5</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># define r0 as 1.5</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>r0 <span class="ot">&lt;-</span> <span class="fl">1.5</span></span></code></pre></div>
 </details>
 </div>
 <div id="getting-population-estimates" class="section level2">
@@ -400,13 +401,13 @@ The expected final size of an epidemic can be calculated using methods detailed 
 More detailed breakdowns of population estimates at the sub-national scale may be available from their respective national governments.
 Here, we use an estimate for the U.K. population size of about 67 million.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get UK population size</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>uk_pop <span class="ot">&lt;-</span> <span class="dv">67</span> <span class="sc">*</span> <span class="fl">1e6</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># get UK population size</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>uk_pop <span class="ot">&lt;-</span> <span class="dv">67</span> <span class="sc">*</span> <span class="fl">1e6</span></span></code></pre></div>
 </details>
 <p>This initial example assumes uniform mixing, i.e., that all individuals in the population have a similar number of social contacts. This can be modelled in the form of a single-element contact matrix, which must be divided by the population size.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># prepare contact matrix</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>contact_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>) <span class="sc">/</span> uk_pop</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># prepare contact matrix</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>contact_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>) <span class="sc">/</span> uk_pop</span></code></pre></div>
 </details>
 <div class="alert alert-secondary">
 <p>Social contacts are well known to be non-uniform, with age being a strong influence on how many contacts a person has and, moreover, on the ages of their contacts. A relatively simple example is that of children of school-going age, who typically have more social contacts than the elderly, and most of whose social contacts are with other schoolchildren.</p>
@@ -417,39 +418,50 @@ Here, we use an estimate for the U.K. population size of about 67 million.</p>
 <h2>Modelling population susceptibility</h2>
 <p>In this initial example, the population is assumed to be fully susceptible to infection. This is modelled in the form of a matrix with a single element, called <code>susceptibility</code>.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># all individuals are fully susceptible</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># all individuals are fully susceptible</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>)</span></code></pre></div>
 </details>
 <p>Since all individuals are fully susceptible, the break-up of the population into susceptibility groups can be represented as another single-element matrix, called <code>p_susceptibility</code>.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># all individuals are in the single, high-susceptibility group</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># all individuals are in the single, high-susceptibility group</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1.0</span>)</span></code></pre></div>
 </details>
 <div class="alert alert-secondary">
 <p>Susceptibility to infection is well known to vary due to a number of factors, including age, prior exposure to the pathogen, or immunisation due to a vaccination campaign.</p>
-<p>The <a href="varying_susceptibility.Rmd">“Modelling heterogeneous susceptibility”</a> vignette explores how variation in susceptibility within and between demographic groups can be incorporated into final epidemic size calculations using <em>finalsize</em>.</p>
+<p>The <a href="varying_susceptibility.html">“Modelling heterogeneous susceptibility”</a> vignette explores how variation in susceptibility within and between demographic groups can be incorporated into final epidemic size calculations using <em>finalsize</em>.</p>
 </div>
 </div>
 <div id="running-final_size" class="section level2">
 <h2>Running <code>final_size</code></h2>
 <p>The final size of the epidemic in the population can then be calculated using the only function in the package, <code>final_size()</code>. This example allows the function to fall back on the default options for the arguments <code>solver</code> (<code>&quot;iterative&quot;</code>) and <code>control</code> (an empty list).</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate final size</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>final_size_data <span class="ot">&lt;-</span> <span class="fu">final_size</span>(</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> uk_pop,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># view the output data frame</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>final_size_data</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     demo_grp   susc_grp susceptibility p_infected</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 demo_grp_1 susc_grp_1              1  0.5828132</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># calculate final size</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>final_size_data <span class="ot">&lt;-</span> <span class="fu">final_size</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">demography_vector =</span> uk_pop,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co"># view the output data frame</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>final_size_data</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt;     demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; 1 demo_grp_1 susc_grp_1              1  0.5828132</span></span></code></pre></div>
 </details>
 <p>This is the final epidemic size without accounting for heterogeneity in social contacts by age or other factors, and without accounting for variation in susceptibility to infection between or within demographic groups.</p>
 <p>This value, of about 58% of the population infected, is easily converted to a count, and suggests that about 39 million people would be infected over the course of this epidemic.</p>
+</div>
+<div id="a-short-cut-for-homogeneous-populations" class="section level2">
+<h2>A short-cut for homogeneous populations</h2>
+<p>The example above explains the steps that go into final size calculation.
+For one very specific use-case, wherein the population is assumed to have homogeneous mixing (i.e., groups do not differ in their social contacts), and homogeneous and full susceptibility to infection, the final size calculation only depends on the <span class="math inline">\(R_0\)</span> of the epidemic.</p>
+<p>In this case, the final size calculation can be simplified to <code>final_size(r0)</code>, with all other parameters taking their default values, which assume homogeneous social contacts and susceptibility.</p>
+<details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">final_size</span>(r0)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;     demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1 demo_grp_1 susc_grp_1              1  0.5828132</span></span></code></pre></div>
+</details>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>

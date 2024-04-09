@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -6,13 +6,8 @@ knitr::opts_chunk$set(
   warning = FALSE,
   dpi = 300
 )
-options(rmarkdown.html_vignette.check_title = FALSE)
 
 ## ----setup, message=FALSE, warning=FALSE, class.source = 'fold-hide'----------
-# load necessary packages
-if (!require("dplyr")) install.packages("dplyr")
-if (!require("tibble")) install.packages("tibble")
-
 library(dplyr)
 library(tibble)
 

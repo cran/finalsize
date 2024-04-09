@@ -343,7 +343,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p><strong>New to <em>finalsize</em>?</strong> It may help to read the <a href="finalsize.html">“Get started”</a> vignette first!</p>
 </div>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(finalsize)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(finalsize)</span></code></pre></div>
 </details>
 <div id="sir-model-definition" class="section level2">
 <h2>SIR model definition</h2>
@@ -353,114 +353,114 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>The <a href="https://epiverse-trace.github.io/epidemics/"><em>epidemics</em> package</a> might be useful!</p>
 </div>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replicate the contact matrix</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>repmat <span class="ot">&lt;-</span> <span class="cf">function</span>(X, m, n) {</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  mx <span class="ot">&lt;-</span> <span class="fu">dim</span>(X)[<span class="dv">1</span>]</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  nx <span class="ot">&lt;-</span> <span class="fu">dim</span>(X)[<span class="dv">2</span>]</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">matrix</span>(<span class="fu">t</span>(<span class="fu">matrix</span>(X, mx, nx <span class="sc">*</span> n)), mx <span class="sc">*</span> m, nx <span class="sc">*</span> n, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the proportion of individuals infected</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>final_size_r <span class="ot">&lt;-</span> <span class="cf">function</span>(r0, contact_matrix,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                         demography_vector, susceptibility, p_susceptibility) {</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># check p_susceptibility</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">rowSums</span>(p_susceptibility) <span class="sc">==</span> <span class="dv">1</span>))</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  p_susc <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(p_susceptibility)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  susc <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(susceptibility)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  demo_v <span class="ot">&lt;-</span> <span class="fu">rep</span>(demography_vector, <span class="fu">ncol</span>(p_susceptibility)) <span class="sc">*</span> p_susc</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  nsteps <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># epidemiological parameters</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> r0</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  gamma <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># initial conditions</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  I <span class="ot">&lt;-</span> <span class="fl">1e-8</span> <span class="sc">*</span> demo_v</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  S <span class="ot">&lt;-</span> demo_v <span class="sc">-</span> I</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  R <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># prepare contact matrix</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">repmat</span>(contact_matrix, <span class="fu">ncol</span>(p_susceptibility), <span class="fu">ncol</span>(p_susceptibility))</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># multiply contact matrix by susceptibility</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> m <span class="sc">*</span> susc</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># iterate over compartmental transitions</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(nsteps)) {</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    force <span class="ot">&lt;-</span> (m <span class="sc">%*%</span> I) <span class="sc">*</span> S <span class="sc">*</span> h <span class="sc">*</span> beta</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    S <span class="ot">&lt;-</span> S <span class="sc">-</span> force</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    g <span class="ot">&lt;-</span> I <span class="sc">*</span> gamma <span class="sc">*</span> h</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    I <span class="ot">&lt;-</span> I <span class="sc">+</span> force <span class="sc">-</span> g</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    R <span class="ot">&lt;-</span> R <span class="sc">+</span> g</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return proportion of individuals recovered</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.vector</span>(R <span class="sc">/</span> demo_v)</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Replicate the contact matrix</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>repmat <span class="ot">&lt;-</span> <span class="cf">function</span>(X, m, n) {</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  mx <span class="ot">&lt;-</span> <span class="fu">dim</span>(X)[<span class="dv">1</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  nx <span class="ot">&lt;-</span> <span class="fu">dim</span>(X)[<span class="dv">2</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="fu">matrix</span>(<span class="fu">t</span>(<span class="fu">matrix</span>(X, mx, nx <span class="sc">*</span> n)), mx <span class="sc">*</span> m, nx <span class="sc">*</span> n, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>}</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Calculate the proportion of individuals infected</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>final_size_r <span class="ot">&lt;-</span> <span class="cf">function</span>(r0, contact_matrix,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>                         demography_vector, susceptibility, p_susceptibility) {</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="co"># check p_susceptibility</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">rowSums</span>(p_susceptibility) <span class="sc">==</span> <span class="dv">1</span>))</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  p_susc <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(p_susceptibility)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  susc <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(susceptibility)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  demo_v <span class="ot">&lt;-</span> <span class="fu">rep</span>(demography_vector, <span class="fu">ncol</span>(p_susceptibility)) <span class="sc">*</span> p_susc</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  nsteps <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="co"># epidemiological parameters</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  h <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> r0</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  gamma <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  <span class="co"># initial conditions</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>  I <span class="ot">&lt;-</span> <span class="fl">1e-8</span> <span class="sc">*</span> demo_v</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>  S <span class="ot">&lt;-</span> demo_v <span class="sc">-</span> I</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>  R <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>  <span class="co"># prepare contact matrix</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">repmat</span>(contact_matrix, <span class="fu">ncol</span>(p_susceptibility), <span class="fu">ncol</span>(p_susceptibility))</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>  <span class="co"># multiply contact matrix by susceptibility</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>  m <span class="ot">&lt;-</span> m <span class="sc">*</span> susc</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>  <span class="co"># iterate over compartmental transitions</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(nsteps)) {</span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>    force <span class="ot">&lt;-</span> (m <span class="sc">%*%</span> I) <span class="sc">*</span> S <span class="sc">*</span> h <span class="sc">*</span> beta</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>    S <span class="ot">&lt;-</span> S <span class="sc">-</span> force</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>    g <span class="ot">&lt;-</span> I <span class="sc">*</span> gamma <span class="sc">*</span> h</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>    I <span class="ot">&lt;-</span> I <span class="sc">+</span> force <span class="sc">-</span> g</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>    R <span class="ot">&lt;-</span> R <span class="sc">+</span> g</span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  }</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>  <span class="co"># return proportion of individuals recovered</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a>  <span class="fu">as.vector</span>(R <span class="sc">/</span> demo_v)</span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>}</span></code></pre></div>
 </details>
 <p>Prepare <span class="math inline">\(R_0\)</span>.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>r0 <span class="ot">&lt;-</span> <span class="fl">2.0</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>r0 <span class="ot">&lt;-</span> <span class="fl">2.0</span></span></code></pre></div>
 </details>
 </div>
 <div id="final-size-in-a-uniformly-mixing-population" class="section level2">
 <h2>Final size in a uniformly mixing population</h2>
 <p>Here, the assumption is of a uniformly mixing population where social contacts do not differ among demographic groups (here, age groups).</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># estimated population size for the UK is 67 million</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>population_size <span class="ot">&lt;-</span> <span class="fl">67e6</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate using finalsize::final_size</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>final_size_finalsize <span class="ot">&lt;-</span> <span class="fu">final_size</span>(</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> <span class="fu">matrix</span>(<span class="dv">1</span>) <span class="sc">/</span> population_size,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> population_size,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">solver =</span> <span class="st">&quot;newton&quot;</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate from SIR model</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>final_size_sir <span class="ot">&lt;-</span> <span class="fu">final_size_r</span>(</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> <span class="fl">0.99</span> <span class="sc">*</span> <span class="fu">matrix</span>(<span class="dv">1</span>) <span class="sc">/</span> population_size,</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> population_size,</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># View the estimates</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>final_size_finalsize</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     demo_grp   susc_grp susceptibility p_infected</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 demo_grp_1 susc_grp_1              1  0.7968121</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>final_size_sir</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.7968781</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># estimated population size for the UK is 67 million</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>population_size <span class="ot">&lt;-</span> <span class="fl">67e6</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># estimate using finalsize::final_size</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>final_size_finalsize <span class="ot">&lt;-</span> <span class="fu">final_size</span>(</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">contact_matrix =</span> <span class="fu">matrix</span>(<span class="dv">1</span>) <span class="sc">/</span> population_size,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">demography_vector =</span> population_size,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">solver =</span> <span class="st">&quot;newton&quot;</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co"># estimate from SIR model</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>final_size_sir <span class="ot">&lt;-</span> <span class="fu">final_size_r</span>(</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  <span class="at">contact_matrix =</span> <span class="fl">0.99</span> <span class="sc">*</span> <span class="fu">matrix</span>(<span class="dv">1</span>) <span class="sc">/</span> population_size,</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="at">demography_vector =</span> population_size,</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>  <span class="at">susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>),</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>)</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co"># View the estimates</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>final_size_finalsize</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt;     demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; 1 demo_grp_1 susc_grp_1              1  0.7968121</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>final_size_sir</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; [1] 0.7968781</span></span></code></pre></div>
 </details>
 <p>There is a small discrepancy between the final epidemics sizes returned by <code>final_size()</code> and the SIR model. One quick check to identify the source of the error would be to calculate the difference between the two sides of the finalsize equation, i.e. <span class="math inline">\(x\)</span>, the estimated final size, against <span class="math inline">\(1 - e^{-R_0x}\)</span> (for a difference of <span class="math inline">\(x - (1 - e^{-R_0x})\)</span>) to see which of the final size estimates is incorrect — a small error, below the error tolerance value (<span class="math inline">\(1^{-6}\)</span>), would indicate that the method being checked is more or less correct, while a larger error would suggest the method is not correct.</p>
 <p>This can be written as a temporary function.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># function to check error in final size estimates</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>final_size_error <span class="ot">&lt;-</span> <span class="cf">function</span>(x, r0, <span class="at">tolerance =</span> <span class="fl">1e-6</span>) {</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  error <span class="ot">&lt;-</span> <span class="fu">abs</span>(x <span class="sc">-</span> (<span class="fl">1.0</span> <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>r0 <span class="sc">*</span> x)))</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(error <span class="sc">&gt;</span> tolerance)) {</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">&quot;Final size estimate error is greater than tolerance!&quot;</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return error</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  error</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># function to check error in final size estimates</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>final_size_error <span class="ot">&lt;-</span> <span class="cf">function</span>(x, r0, <span class="at">tolerance =</span> <span class="fl">1e-6</span>) {</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  error <span class="ot">&lt;-</span> <span class="fu">abs</span>(x <span class="sc">-</span> (<span class="fl">1.0</span> <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>r0 <span class="sc">*</span> x)))</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(error <span class="sc">&gt;</span> tolerance)) {</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">&quot;Final size estimate error is greater than tolerance!&quot;</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  }</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="co"># return error</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  error</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>}</span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># error for estimate using finalsize::final_size()</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size_error</span>(final_size_finalsize<span class="sc">$</span>p_infected, r0)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># error for estimate from SIR model</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size_error</span>(final_size_sir, r0)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Final size estimate error is greater than tolerance!&quot;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 3.915923e-05</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># error for estimate using finalsize::final_size()</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">final_size_error</span>(final_size_finalsize<span class="sc">$</span>p_infected, r0)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># error for estimate from SIR model</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">final_size_error</span>(final_size_sir, r0)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Final size estimate error is greater than tolerance!&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; [1] 3.915923e-05</span></span></code></pre></div>
 </details>
 <p>This suggests that it is the SIR model which makes a small error in the final size estimate, while <code>finalsize::final_size()</code> provides an estimate that is within the specified solver tolerance (<span class="math inline">\(1^{-6}\)</span>).</p>
 </div>
@@ -471,72 +471,72 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Prepare population data</h3>
 <p>First, prepare the population data using the dataset provided with <em>finalsize</em>. This includes preparing the population’s age-specific contact matrix and demography distribution vector, as well as the susceptibility and demography-in-susceptibility distribution vectors. See the <a href="susceptibility_matrices.html">“Guide to constructing susceptibility matrices”</a> for help understanding this latter step, and see the the vignette on <a href="varying_susceptibility.html">“Modelling heterogeneous susceptibility”</a> for worked out examples.</p>
 <details class="chunk-details"><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load example POLYMOD data included with the package</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(polymod_uk)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define contact matrix (entry {ij} is contacts in group i</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># reported by group j)</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>contact_matrix <span class="ot">&lt;-</span> polymod_uk<span class="sc">$</span>contact_matrix</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Define population in each age group</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>demography_vector <span class="ot">&lt;-</span> polymod_uk<span class="sc">$</span>demography_vector</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Load example POLYMOD data included with the package</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">data</span>(polymod_uk)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># Define contact matrix (entry {ij} is contacts in group i</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># reported by group j)</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>contact_matrix <span class="ot">&lt;-</span> polymod_uk<span class="sc">$</span>contact_matrix</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># Define population in each age group</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>demography_vector <span class="ot">&lt;-</span> polymod_uk<span class="sc">$</span>demography_vector</span></code></pre></div>
 </details>
 <p>Examine the contact matrix and demography vector.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>contact_matrix</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; contact.age.group         [,1]         [,2]         [,3]</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           [0,20)  4.514575e-08 1.600071e-08 8.965770e-09</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           [20,40) 1.600071e-08 2.489595e-08 1.346051e-08</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           40+     8.965770e-09 1.346051e-08 1.464763e-08</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>demography_vector</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 14799290 16526302 28961159</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>contact_matrix</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; contact.age.group         [,1]         [,2]         [,3]</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;           [0,20)  4.514575e-08 1.600071e-08 8.965770e-09</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;           [20,40) 1.600071e-08 2.489595e-08 1.346051e-08</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt;           40+     8.965770e-09 1.346051e-08 1.464763e-08</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>demography_vector</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; [1] 14799290 16526302 28961159</span></span></code></pre></div>
 </details>
 </div>
 <div id="susceptibility-varies-between-groups" class="section level3">
 <h3>Susceptibility varies between groups</h3>
 <p>In this scenario, susceptibility to infection only varies between groups, with older age groups (20 and above) only half as susceptible as individuals aged (0 – 19).</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>),</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector),</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">1</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Assume uniform susceptibility within age groups</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> <span class="fl">1.0</span>,</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector),</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">1</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">data =</span> <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector),</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">1</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># Assume uniform susceptibility within age groups</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">data =</span> <span class="fl">1.0</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector),</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">1</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>)</span></code></pre></div>
 </details>
 <p>Examine the final size estimates.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># from {finalsize} using finalsize::final_size</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size</span>(</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility,</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">solver =</span> <span class="st">&quot;newton&quot;</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1            1.0  0.7119330</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1            0.5  0.3252457</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1            0.5  0.2334420</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># using SIR model</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix <span class="sc">*</span> <span class="fl">0.99</span>,</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.7057450 0.3187776 0.2281473</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># from {finalsize} using finalsize::final_size</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">final_size</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">solver =</span> <span class="st">&quot;newton&quot;</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>)</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1            1.0  0.7119330</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1            0.5  0.3252457</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1            0.5  0.2334420</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co"># using SIR model</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix <span class="sc">*</span> <span class="fl">0.99</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>)</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt; [1] 0.7057450 0.3187776 0.2281473</span></span></code></pre></div>
 </details>
 <p>The final size estimates are very close, and the difference does not fundamentally alter our understanding of the potential outcomes of an epidemic in this population.</p>
 </div>
@@ -544,61 +544,61 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Susceptibility varies within groups in different proportions</h3>
 <p>In this scenario, susceptibility to infection varies within age groups, with a fraction of each age group much less susceptible. Additionally, the proportion of individuals with low susceptibility varies between groups, with individuals aged (0 – 19) much more likely to have low susceptibility than older age groups.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Here</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">0.1</span>),</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">byrow =</span> <span class="cn">TRUE</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># view the susceptibility matrix</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>susceptibility</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,]    1  0.1</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]    1  0.1</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,]    1  0.1</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Assume variation in susceptibility within age groups</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co"># A higher proportion of 0 -- 20s are in the lower susceptibility group</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>p_susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>)</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>p_susceptibility[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_susceptibility[, <span class="dv">2</span>]</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="co"># view p_susceptibility</span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>p_susceptibility</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,]  0.4  0.6</span></span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]  0.5  0.5</span></span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,]  0.7  0.3</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co"># Here</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">0.1</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">byrow =</span> <span class="cn">TRUE</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># view the susceptibility matrix</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>susceptibility</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; [1,]    1  0.1</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; [2,]    1  0.1</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; [3,]    1  0.1</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co"># Assume variation in susceptibility within age groups</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co"># A higher proportion of 0 -- 20s are in the lower susceptibility group</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>p_susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>)</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>p_susceptibility[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_susceptibility[, <span class="dv">2</span>]</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co"># view p_susceptibility</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>p_susceptibility</span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co">#&gt; [1,]  0.4  0.6</span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="co">#&gt; [2,]  0.5  0.5</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="co">#&gt; [3,]  0.7  0.3</span></span></code></pre></div>
 </details>
 <p>Examine the final size estimates for this scenario.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate group-specific final sizes using finalsize::final_size</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size</span>(</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1            1.0 0.27211694</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1            1.0 0.24819087</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1            1.0 0.19449495</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   [0,20) susc_grp_2            0.1 0.03126239</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  [20,40) susc_grp_2            0.1 0.02812422</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6      40+ susc_grp_2            0.1 0.02139636</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate group-specific final sizes from the SIR model</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.27261723 0.24864863 0.19485488 0.03132008 0.02817620 0.02143593</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># estimate group-specific final sizes using finalsize::final_size</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">final_size</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1            1.0 0.27211694</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1            1.0 0.24819087</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1            1.0 0.19449495</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; 4   [0,20) susc_grp_2            0.1 0.03126239</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; 5  [20,40) susc_grp_2            0.1 0.02812422</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; 6      40+ susc_grp_2            0.1 0.02139636</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co"># estimate group-specific final sizes from the SIR model</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a>)</span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; [1] 0.27261723 0.24864863 0.19485488 0.03132008 0.02817620 0.02143593</span></span></code></pre></div>
 </details>
 <p>Here too, the final size estimates are very similar, and provide essentially the same understanding of the potential outcomes of an epidemic in this population.</p>
 </div>
@@ -606,54 +606,54 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Complete immunity to infection in part of the population</h3>
 <p>In this scenario, a fraction of each age group is completely immune to infection. Additionally, individuals aged (0 – 19) are much more likely to have complete immunity than older age groups.</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fl">0.0</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># view susceptibility</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>susceptibility</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,]    1    0</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]    1    0</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,]    1    0</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Assume that some proportion are completely immune</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co"># complete immunity is more common among younger individuals</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>p_susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>p_susceptibility[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_susceptibility[, <span class="dv">2</span>]</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="co"># view p_susceptibility</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>p_susceptibility</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,]  0.4  0.6</span></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]  0.5  0.5</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,]  0.7  0.3</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Define susceptibility of each group</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fl">0.0</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co"># view susceptibility</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>susceptibility</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; [1,]    1    0</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; [2,]    1    0</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; [3,]    1    0</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co"># Assume that some proportion are completely immune</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co"># complete immunity is more common among younger individuals</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>p_susceptibility <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="fu">length</span>(demography_vector), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>p_susceptibility[, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>p_susceptibility[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_susceptibility[, <span class="dv">2</span>]</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co"># view p_susceptibility</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>p_susceptibility</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;      [,1] [,2]</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; [1,]  0.4  0.6</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; [2,]  0.5  0.5</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; [3,]  0.7  0.3</span></span></code></pre></div>
 </details>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size</span>(</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1              1 0.07787362</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1              1 0.07227733</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1              1 0.05594389</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   [0,20) susc_grp_2              0 0.00000000</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  [20,40) susc_grp_2              0 0.00000000</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6      40+ susc_grp_2              0 0.00000000</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.07791032 0.07231121 0.05597004 0.00000001 0.00000001 0.00000001</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">final_size</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>)</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   demo_grp   susc_grp susceptibility p_infected</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; 1   [0,20) susc_grp_1              1 0.07787362</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; 2  [20,40) susc_grp_1              1 0.07227733</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; 3      40+ susc_grp_1              1 0.05594389</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; 4   [0,20) susc_grp_2              0 0.00000000</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; 5  [20,40) susc_grp_2              0 0.00000000</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; 6      40+ susc_grp_2              0 0.00000000</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="fu">final_size_r</span>(</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">r0 =</span> r0,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contact_matrix,</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>  <span class="at">susceptibility =</span> susceptibility,</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a>  <span class="at">p_susceptibility =</span> p_susceptibility</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a>)</span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt; [1] 0.07791032 0.07231121 0.05597004 0.00000001 0.00000001 0.00000001</span></span></code></pre></div>
 </details>
 <p>Here, the method from <code>finalsize::final_size()</code> correctly provides estimates of 0.0 for the susceptibility group (in each age group) that is completely immune, while the SIR model method estimates that a very small fraction of the completely immune groups are still infected. This discrepancy is due to the assumption of initial conditions for the SIR model, wherein the same fraction (<span class="math inline">\(1^{-8}\)</span>) are assumed to be initially infected.</p>
 </div>

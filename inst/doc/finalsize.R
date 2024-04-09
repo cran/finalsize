@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -43,4 +43,7 @@ final_size_data <- final_size(
 
 # view the output data frame
 final_size_data
+
+## -----------------------------------------------------------------------------
+final_size(r0)
 

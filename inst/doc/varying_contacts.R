@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -11,10 +11,7 @@ knitr::opts_chunk$set(
 # load finalsize
 library(finalsize)
 
-# load necessary packages
-if (!require("socialmixr")) install.packages("socialmixr")
-if (!require("ggplot2")) install.packages("ggplot2")
-
+library(socialmixr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------

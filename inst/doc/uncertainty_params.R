@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -6,20 +6,15 @@ knitr::opts_chunk$set(
   warning = FALSE,
   dpi = 300
 )
-options(rmarkdown.html_vignette.check_title = FALSE)
 
 ## ----setup, message=FALSE, warning=FALSE, class.source = 'fold-hide'----------
 # load finalsize
 library(finalsize)
-
-# load necessary packages
-if (!require("socialmixr")) install.packages("socialmixr")
-if (!require("ggplot2")) install.packages("ggplot2")
-
+library(socialmixr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
-# get UK polymod data
+# get UK polymod data from socialmixr
 polymod <- socialmixr::polymod
 contact_data <- socialmixr::contact_matrix(
   polymod,
